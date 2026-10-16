@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pediu Patrão - Sistema de Pedidos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <!-- Botão para abrir/fechar a sidebar em telas pequenas -->
+    <div class="toggle-btn btn btn-dark d-md-none">
+        <span>&#9776;</span>
+    </div>
+
+    <!-- Sidebar incluído como fragmento -->
+    <aside>
+        <div>
+        <div id="sidebar">
+            <h4 class="text-center py-3">Pediu Patrão</h4>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="/" aria-current="page">
+                        <i class="bi bi-house"></i><span class="d-none d-md-inline">&nbsp;Home</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/clientes">
+                        <i class="bi bi-person-raised-hand"></i><span class="d-none d-md-inline">&nbsp;Clientes</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pedidos">
+                        <i class="bi bi-bag"></i><span class="d-none d-md-inline">&nbsp;Pedidos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/auditoria">
+                        <i class="bi bi-clock-history"></i><span class="d-none d-md-inline">&nbsp;Auditoria</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="toggleSubmenu(event, this)">
+                        <i class="bi bi-gear"></i><span class="d-none d-md-inline">&nbsp;Configurações</span>
+                        <span class="float-end">&#9662;</span>
+                    </a>
+                    <ul class="nav flex-column submenu">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/funcionarios">
+                                <i class="bi bi-person-walking"></i><span
+                                    class="d-none d-md-inline">&nbsp;Funcionários</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/entregadores">
+                                <i class="bi bi-bicycle"></i><span class="d-none d-md-inline">&nbsp;Entregadores</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/horarios">
+                                <i class="bi bi-clock"></i><span class="d-none d-md-inline">&nbsp;Horário de
+                                    Funcionamento</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/produtos">
+                                <i class="bi bi-boxes"></i><span class="d-none d-md-inline">&nbsp;Produtos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/usuarios">
+                                <i class="bi bi-people-fill"></i><span class="d-none d-md-inline">&nbsp;Usuários</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <form action="/logout" method="post" class="sidebar-logout"><input type="hidden" name="_csrf" value="ovLYyPDcxbGCMCjlloNxSvjChbpT1ctFHzOR4APUSrE0xhSDx8fprMXo94ivBBqBoK5FLpr0qNswtv5oeQag1zvmc4ABo3K6"/>
+                <input type="hidden" name="_csrf" value="ovLYyPDcxbGCMCjlloNxSvjChbpT1ctFHzOR4APUSrE0xhSDx8fprMXo94ivBBqBoK5FLpr0qNswtv5oeQag1zvmc4ABo3K6" />
+                <button type="submit" class="nav-link sidebar-logout-btn">
+                    <i class="bi bi-box-arrow-right"></i><span class="d-none d-md-inline">&nbsp;Sair</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="container-fluid mt-4">
+        <div>
+
+        <input type="hidden" id="csrf-token" value="ovLYyPDcxbGCMCjlloNxSvjChbpT1ctFHzOR4APUSrE0xhSDx8fprMXo94ivBBqBoK5FLpr0qNswtv5oeQag1zvmc4ABo3K6" />
+        <input type="hidden" id="csrf-header" value="X-CSRF-TOKEN" />
+        <input type="hidden" id="eh-gerente" value="true" />
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-bag me-2 text-primary"></i>Pedidos
+            </h2>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Novo pedido</h5>
+                <form id="novo-pedido">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="cliente-id">Cliente</label>
+                            <select id="cliente-id" class="form-select" required>
+                                <option value="">Selecione o cliente</option>
+                                <option value="6acf815a5fc78e0914aa8b7c">Pedro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-md-5">
+                            <label class="form-label" for="produto-id">Produto</label>
+                            <select id="produto-id" class="form-select">
+                                <option value="">Selecione o produto</option>
+                                <option value="6ad011de72e64d64eabb5b0b"
+                                    data-nome="Pizza Calabresa" data-preco="45.0">Pizza Calabresa - R$ 45.0</option>
+                                <option value="6ad011ee72e64d64eabb5b0c"
+                                    data-nome="Pizza Calabresa" data-preco="45.0">Pizza Calabresa - R$ 45.0</option>
+                                <option value="6ad0e754f08dea6a0e1c3be1"
+                                    data-nome="Pizza Baiana" data-preco="50.0">Pizza Baiana - R$ 50.0</option>
+                                <option value="6ad10285f9dfa0031f9e5f3b"
+                                    data-nome="Pizza Palmito" data-preco="45.79">Pizza Palmito - R$ 45.79</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="quantidade">Qtd.</label>
+                            <input id="quantidade" class="form-control" type="number" min="1" value="1" />
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="btn-add-item" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-plus-lg"></i> Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm align-middle mb-0" id="itens-pedido-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th style="width: 100px;">Qtd.</th>
+                                    <th style="width: 120px;">Preço</th>
+                                    <th style="width: 80px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itens-pedido"></tbody>
+                        </table>
+                        <p id="itens-vazio" class="text-muted small mb-0">Nenhum item adicionado.</p>
+                    </div>
+                    
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle me-1"></i>Registrar pedido
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        
+        
+        <div id="feedback-api" class="alert d-none" role="alert"></div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-4">Cliente</th>
+                                <th>Itens</th>
+                                <th>Subtotal</th>
+                                <th>Desconto</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Entrada</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                            <tr data-pedido-id="6ad10264f9dfa0031f9e5f39">
+                                <td class="ps-4">
+                                    <div class="fw-medium">Pedro</div>
+                                    <div class="small text-muted">6ad10264f9dfa0031f9e5f39</div>
+                                </td>
+                                <td>
+                                    <ul class="list-unstyled mb-0 small">
+                                        <li>1x Pizza Baiana</li>
+                                    </ul>
+                                    
+                                </td>
+                                <td>50.00</td>
+                                <td>
+                                    
+                                    <span>—</span>
+                                </td>
+                                <td class="fw-semibold">50.00</td>
+                                <td>
+                                    <span class="badge bg-secondary">RECEBIDO</span>
+                                    
+                                </td>
+                                <td class="small">
+                                    <div>2026-10-15 16:42</div>
+                                    <div class="text-muted">teste</div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-status"
+                                            data-status="EM_PREPARACAO">Em
+                                            preparação</button>
+                                        
+                                        
+                                        
+                                        
+
+                                        <button type="button" class="btn btn-sm btn-outline-warning btn-desconto">
+                                            Desconto
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-cancelar">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-muted small">
+                Total: <strong>1</strong> pedido(s)
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalDesconto" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Aplicar desconto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Disponível para GERENTE/ADMIN. Máximo de 20%.</p>
+                        <label class="form-label" for="percentual-desconto">Percentual (%)</label>
+                        <input type="number" class="form-control" id="percentual-desconto" min="0.01" max="20"
+                            step="0.01" value="5" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-warning" id="confirmar-desconto">Aplicar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalCancelamento" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cancelar pedido</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Disponível para GERENTE/ADMIN. Informe a justificativa.</p>
+                        <label class="form-label" for="justificativa-cancelamento">Justificativa</label>
+                        <textarea class="form-control" id="justificativa-cancelamento" rows="3" maxlength="500"
+                            required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-danger" id="confirmar-cancelamento">Cancelar
+                            pedido</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const csrfTokenEl = document.getElementById('csrf-token');
+                const csrfHeaderEl = document.getElementById('csrf-header');
+                if (!csrfTokenEl || !csrfHeaderEl) return;
+
+                const csrfToken = csrfTokenEl.value;
+                const csrfHeader = csrfHeaderEl.value;
+                const itens = [];
+                let pedidoSelecionado = null;
+                let modalDesconto = null;
+                let modalCancelamento = null;
+
+                const tbodyItens = document.getElementById('itens-pedido');
+                const itensVazio = document.getElementById('itens-vazio');
+                const feedback = document.getElementById('feedback-api');
+                const btnAddItem = document.getElementById('btn-add-item');
+                const formNovoPedido = document.getElementById('novo-pedido');
+
+                function obterModal(id) {
+                    const el = document.getElementById(id);
+                    if (!el || typeof bootstrap === 'undefined') return null;
+                    return bootstrap.Modal.getOrCreateInstance(el);
+                }
+
+                function apiHeaders() {
+                    const headers = { 'Content-Type': 'application/json' };
+                    headers[csrfHeader] = csrfToken;
+                    return headers;
+                }
+
+                function mostrarFeedback(mensagem, ok) {
+                    if (!feedback) {
+                        alert(mensagem);
+                        return;
+                    }
+                    feedback.textContent = mensagem;
+                    feedback.className = 'alert ' + (ok ? 'alert-success' : 'alert-danger');
+                }
+
+                async function lerErro(response, padrao) {
+                    try {
+                        const data = await response.json();
+                        return data.erro || data.message || padrao;
+                    } catch (e) {
+                        return padrao;
+                    }
+                }
+
+                function renderItens() {
+                    if (!tbodyItens) return;
+                    tbodyItens.innerHTML = '';
+                    if (itens.length === 0) {
+                        if (itensVazio) itensVazio.classList.remove('d-none');
+                        return;
+                    }
+                    if (itensVazio) itensVazio.classList.add('d-none');
+                    itens.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${item.nome}</td>
+                            <td>${item.quantidade}</td>
+                            <td>R$ ${Number(item.preco).toFixed(2)}</td>
+                            <td><button type="button" class="btn btn-sm btn-outline-danger" data-index="${index}">
+                                <i class="bi bi-trash"></i></button></td>`;
+                        tbodyItens.appendChild(tr);
+                    });
+                }
+
+                if (btnAddItem) {
+                    btnAddItem.addEventListener('click', () => {
+                        const select = document.getElementById('produto-id');
+                        const option = select && select.selectedOptions[0];
+                        const quantidade = Number(document.getElementById('quantidade').value);
+                        if (!option || !option.value) {
+                            alert('Selecione um produto.');
+                            return;
+                        }
+                        if (!quantidade || quantidade < 1) {
+                            alert('Informe uma quantidade válida.');
+                            return;
+                        }
+                        const existente = itens.find(i => i.produtoId === option.value);
+                        if (existente) {
+                            existente.quantidade += quantidade;
+                        } else {
+                            itens.push({
+                                produtoId: option.value,
+                                nome: option.dataset.nome || option.textContent,
+                                preco: option.dataset.preco || 0,
+                                quantidade
+                            });
+                        }
+                        select.value = '';
+                        document.getElementById('quantidade').value = 1;
+                        renderItens();
+                    });
+                }
+
+                if (tbodyItens) {
+                    tbodyItens.addEventListener('click', event => {
+                        const btn = event.target.closest('button[data-index]');
+                        if (!btn) return;
+                        itens.splice(Number(btn.dataset.index), 1);
+                        renderItens();
+                    });
+                }
+
+                if (formNovoPedido) {
+                    formNovoPedido.addEventListener('submit', async event => {
+                        event.preventDefault();
+                        const clienteId = document.getElementById('cliente-id').value;
+                        if (!clienteId) {
+                            alert('Selecione o cliente.');
+                            return;
+                        }
+                        if (itens.length === 0) {
+                            alert('Adicione ao menos um item ao pedido.');
+                            return;
+                        }
+                        const response = await fetch('/api/pedidos', {
+                            method: 'POST',
+                            headers: apiHeaders(),
+                            body: JSON.stringify({
+                                clienteId,
+                                itens: itens.map(i => ({ produtoId: i.produtoId, quantidade: i.quantidade }))
+                            })
+                        });
+                        if (response.ok) {
+                            location.reload();
+                            return;
+                        }
+                        let mensagem = await lerErro(response, 'Não foi possível registrar o pedido.');
+                        if (response.status === 403) {
+                            mensagem = 'Você não tem permissão para registrar pedidos com este usuário.';
+                        }
+                        mostrarFeedback(mensagem, false);
+                    });
+                }
+
+                async function atualizarStatus(pedidoId, status) {
+                    const response = await fetch(`/api/pedidos/${pedidoId}/status`, {
+                        method: 'PUT',
+                        headers: apiHeaders(),
+                        body: JSON.stringify({ status })
+                    });
+                    if (response.ok) {
+                        location.reload();
+                        return;
+                    }
+                    mostrarFeedback(await lerErro(response, 'Não foi possível atualizar o status.'), false);
+                }
+
+                document.querySelectorAll('.btn-status').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const pedidoId = btn.closest('tr').dataset.pedidoId;
+                        const status = btn.dataset.status;
+                        atualizarStatus(pedidoId, status);
+                    });
+                });
+
+                document.querySelectorAll('.btn-desconto').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pedidoSelecionado = btn.closest('tr').dataset.pedidoId;
+                        document.getElementById('percentual-desconto').value = '5';
+                        modalDesconto = obterModal('modalDesconto');
+                        if (modalDesconto) modalDesconto.show();
+                    });
+                });
+
+                document.querySelectorAll('.btn-cancelar').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pedidoSelecionado = btn.closest('tr').dataset.pedidoId;
+                        document.getElementById('justificativa-cancelamento').value = '';
+                        modalCancelamento = obterModal('modalCancelamento');
+                        if (modalCancelamento) modalCancelamento.show();
+                    });
+                });
+
+                const btnConfirmarDesconto = document.getElementById('confirmar-desconto');
+                if (btnConfirmarDesconto) {
+                    btnConfirmarDesconto.addEventListener('click', async () => {
+                        const percentual = Number(document.getElementById('percentual-desconto').value);
+                        if (!pedidoSelecionado || !percentual || percentual <= 0 || percentual > 20) {
+                            alert('Informe um percentual entre 0,01 e 20.');
+                            return;
+                        }
+                        const response = await fetch(`/api/pedidos/${pedidoSelecionado}/desconto`, {
+                            method: 'PUT',
+                            headers: apiHeaders(),
+                            body: JSON.stringify({ percentual })
+                        });
+                        if (response.ok) {
+                            location.reload();
+                            return;
+                        }
+                        if (modalDesconto) modalDesconto.hide();
+                        mostrarFeedback(await lerErro(response, 'Não foi possível aplicar o desconto.'), false);
+                    });
+                }
+
+                const btnConfirmarCancelamento = document.getElementById('confirmar-cancelamento');
+                if (btnConfirmarCancelamento) {
+                    btnConfirmarCancelamento.addEventListener('click', async () => {
+                        const justificativa = document.getElementById('justificativa-cancelamento').value.trim();
+                        if (!pedidoSelecionado || !justificativa) {
+                            alert('Informe a justificativa do cancelamento.');
+                            return;
+                        }
+                        const response = await fetch(`/api/pedidos/${pedidoSelecionado}/cancelamento`, {
+                            method: 'PUT',
+                            headers: apiHeaders(),
+                            body: JSON.stringify({ justificativa })
+                        });
+                        if (response.ok) {
+                            location.reload();
+                            return;
+                        }
+                        if (modalCancelamento) modalCancelamento.hide();
+                        mostrarFeedback(await lerErro(response, 'Não foi possível cancelar o pedido.'), false);
+                    });
+                }
+
+                renderItens();
+            });
+        </script>
+
+    </div>
+    </main>
+
+    <script src="/js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

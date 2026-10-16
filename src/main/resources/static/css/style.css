@@ -11,6 +11,8 @@ body {
     background-color: #343a40;
     color: white;
     height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 #sidebar a {
@@ -19,6 +21,26 @@ body {
 }
 
 #sidebar a:hover {
+    background-color: #495057;
+    color: white;
+}
+
+.sidebar-logout {
+    margin-top: auto;
+    padding: 0.5rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-logout-btn {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: white;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sidebar-logout-btn:hover {
     background-color: #495057;
     color: white;
 }

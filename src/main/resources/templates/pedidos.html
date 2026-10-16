@@ -1,77 +1,470 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <title>Lista de Pedidos</title>
 </head>
+
 <body>
 
-<div th:fragment="content">
+    <div th:fragment="content">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold mb-0">
-            <i class="bi bi-bag me-2 text-primary"></i>Pedidos
-        </h2>
-    </div>
+        <input type="hidden" id="csrf-token" th:value="${_csrf.token}" />
+        <input type="hidden" id="csrf-header" th:value="${_csrf.headerName}" />
+        <input type="hidden" id="eh-gerente" th:value="${ehGerente}" />
 
-    <!-- Mensagens de feedback -->
-    <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <span th:text="${sucesso}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <span th:text="${erro}"></span>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-
-    <!-- Tabela -->
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th class="ps-4">ID</th>
-                        <th>Cliente ID</th>
-                        <th>Tipo de Pizza</th>
-                        <th>Sabor</th>
-                        <th>Quantidade</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Lista vazia -->
-                    <tr th:if="${#lists.isEmpty(pedidos)}">
-                        <td colspan="6" class="text-center text-muted py-5">
-                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                            Nenhum pedido encontrado.
-                        </td>
-                    </tr>
-                    <!-- Linhas -->
-                    <tr th:each="pedido : ${pedidos}">
-                        <td class="ps-4 text-muted" th:text="${pedido.id}"></td>
-                        <td th:text="${pedido.clienteId}"></td>
-                        <td th:text="${pedido.tipoPizza}"></td>
-                        <td th:text="${pedido.sabor}"></td>
-                        <td th:text="${pedido.quantidade}"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${pedido.status == 'ENTREGUE'} ? 'bg-success' :
-                                                  (${pedido.status == 'CANCELADO'} ? 'bg-danger' :
-                                                  (${pedido.status == 'EM_PREPARO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
-                                  th:text="${pedido.status}">
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-bag me-2 text-primary"></i>Pedidos
+            </h2>
         </div>
-        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}">
-            Total: <strong th:text="${#lists.size(pedidos)}"></strong> pedido(s)
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Novo pedido</h5>
+                <form id="novo-pedido">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="cliente-id">Cliente</label>
+                            <select id="cliente-id" class="form-select" required>
+                                <option value="">Selecione o cliente</option>
+                                <option th:each="cliente : ${clientes}" th:value="${cliente.id}"
+                                    th:text="${cliente.nome}"></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 align-items-end mb-2">
+                        <div class="col-md-5">
+                            <label class="form-label" for="produto-id">Produto</label>
+                            <select id="produto-id" class="form-select">
+                                <option value="">Selecione o produto</option>
+                                <option th:each="produto : ${produtos}" th:value="${produto.id}"
+                                    th:attr="data-nome=${produto.nome},data-preco=${produto.preco}"
+                                    th:text="${produto.nome + ' - R$ ' + produto.preco}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="quantidade">Qtd.</label>
+                            <input id="quantidade" class="form-control" type="number" min="1" value="1" />
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" id="btn-add-item" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-plus-lg"></i> Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mb-3" th:if="${!#lists.isEmpty(produtos)}">
+                        <table class="table table-sm align-middle mb-0" id="itens-pedido-table">
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th style="width: 100px;">Qtd.</th>
+                                    <th style="width: 120px;">Preço</th>
+                                    <th style="width: 80px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itens-pedido"></tbody>
+                        </table>
+                        <p id="itens-vazio" class="text-muted small mb-0">Nenhum item adicionado.</p>
+                    </div>
+                    <div th:if="${#lists.isEmpty(produtos)}" class="alert alert-warning py-2">
+                        Não há produtos ativos para montar o pedido.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(produtos)}">
+                        <i class="bi bi-check2-circle me-1"></i>Registrar pedido
+                    </button>
+                </form>
+            </div>
         </div>
+
+        <div class="alert alert-success alert-dismissible fade show" th:if="${sucesso}" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${sucesso}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div class="alert alert-danger alert-dismissible fade show" th:if="${erro}" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${erro}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div id="feedback-api" class="alert d-none" role="alert"></div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-4">Cliente</th>
+                                <th>Itens</th>
+                                <th>Subtotal</th>
+                                <th>Desconto</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Entrada</th>
+                                <th class="text-end pe-4">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${pedidos == null or #lists.isEmpty(pedidos)}">
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    Nenhum pedido encontrado.
+                                </td>
+                            </tr>
+                            <tr th:each="pedido : ${pedidos}" th:attr="data-pedido-id=${pedido.id}">
+                                <td class="ps-4">
+                                    <div class="fw-medium"
+                                        th:text="${clientesNomes != null and clientesNomes.containsKey(pedido.clienteId) ? clientesNomes.get(pedido.clienteId) : pedido.clienteId}">
+                                        Cliente</div>
+                                    <div class="small text-muted" th:text="${pedido.id}"></div>
+                                </td>
+                                <td>
+                                    <ul class="list-unstyled mb-0 small" th:if="${pedido.itens != null}">
+                                        <li th:each="item : ${pedido.itens}"
+                                            th:text="${item.quantidade + 'x ' + (item.nomeProduto != null ? item.nomeProduto : item.produtoId)}">
+                                        </li>
+                                    </ul>
+                                    <span th:if="${pedido.itens == null or #lists.isEmpty(pedido.itens)}">—</span>
+                                </td>
+                                <td th:text="${pedido.subtotal}"></td>
+                                <td>
+                                    <span
+                                        th:if="${pedido.percentualDesconto != null and pedido.percentualDesconto.signum() > 0}"
+                                        th:text="${pedido.percentualDesconto + '% / R$ ' + pedido.valorDesconto}"></span>
+                                    <span
+                                        th:unless="${pedido.percentualDesconto != null and pedido.percentualDesconto.signum() > 0}">—</span>
+                                </td>
+                                <td class="fw-semibold" th:text="${pedido.valorTotal}"></td>
+                                <td th:with="st=${pedido.status != null ? pedido.status.toString() : ''}">
+                                    <span class="badge"
+                                        th:classappend="${st == 'FINALIZADO'} ? 'bg-success' :
+                                                      (${st == 'CANCELADO'} ? 'bg-danger' :
+                                                      (${st == 'EM_PREPARACAO'} ? 'bg-warning text-dark' :
+                                                      (${st == 'PRONTO'} ? 'bg-info text-dark' :
+                                                      (${st == 'SAIU_PARA_ENTREGA' or st == 'RETIRADO'} ? 'bg-primary' : 'bg-secondary'))))"
+                                        th:text="${pedido.status}"></span>
+                                    <div class="small text-danger mt-1"
+                                        th:if="${pedido.justificativaCancelamento != null}"
+                                        th:text="${pedido.justificativaCancelamento}"></div>
+                                </td>
+                                <td class="small">
+                                    <div
+                                        th:text="${pedido.dataHoraEntrada != null ? #strings.substring(pedido.dataHoraEntrada.toString(), 0, 16).replace('T', ' ') : '—'}">
+                                    </div>
+                                    <div class="text-muted" th:text="${pedido.responsavelEntrada}"></div>
+                                </td>
+                                <td class="text-end pe-4"
+                                    th:with="st=${pedido.status != null ? pedido.status.toString() : ''}">
+                                    <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-status"
+                                            th:if="${st == 'RECEBIDO'}" data-status="EM_PREPARACAO">Em
+                                            preparação</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-status"
+                                            th:if="${st == 'EM_PREPARACAO'}" data-status="PRONTO">Pronto</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-status"
+                                            th:if="${st == 'PRONTO'}" data-status="SAIU_PARA_ENTREGA">Saiu p/
+                                            entrega</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-status"
+                                            th:if="${st == 'PRONTO'}" data-status="RETIRADO">Retirado</button>
+                                        <button type="button" class="btn btn-sm btn-outline-success btn-status"
+                                            th:if="${st == 'SAIU_PARA_ENTREGA' or st == 'RETIRADO'}"
+                                            data-status="FINALIZADO">Finalizar</button>
+
+                                        <button type="button" class="btn btn-sm btn-outline-warning btn-desconto"
+                                            th:if="${ehGerente and (st == 'RECEBIDO' or st == 'EM_PREPARACAO' or st == 'PRONTO')}">
+                                            Desconto
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-cancelar"
+                                            th:if="${ehGerente and (st == 'RECEBIDO' or st == 'EM_PREPARACAO' or st == 'PRONTO')}">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}">
+                Total: <strong th:text="${#lists.size(pedidos)}"></strong> pedido(s)
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalDesconto" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Aplicar desconto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Disponível para GERENTE/ADMIN. Máximo de 20%.</p>
+                        <label class="form-label" for="percentual-desconto">Percentual (%)</label>
+                        <input type="number" class="form-control" id="percentual-desconto" min="0.01" max="20"
+                            step="0.01" value="5" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-warning" id="confirmar-desconto">Aplicar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="modalCancelamento" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cancelar pedido</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Disponível para GERENTE/ADMIN. Informe a justificativa.</p>
+                        <label class="form-label" for="justificativa-cancelamento">Justificativa</label>
+                        <textarea class="form-control" id="justificativa-cancelamento" rows="3" maxlength="500"
+                            required></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-danger" id="confirmar-cancelamento">Cancelar
+                            pedido</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const csrfTokenEl = document.getElementById('csrf-token');
+                const csrfHeaderEl = document.getElementById('csrf-header');
+                if (!csrfTokenEl || !csrfHeaderEl) return;
+
+                const csrfToken = csrfTokenEl.value;
+                const csrfHeader = csrfHeaderEl.value;
+                const itens = [];
+                let pedidoSelecionado = null;
+                let modalDesconto = null;
+                let modalCancelamento = null;
+
+                const tbodyItens = document.getElementById('itens-pedido');
+                const itensVazio = document.getElementById('itens-vazio');
+                const feedback = document.getElementById('feedback-api');
+                const btnAddItem = document.getElementById('btn-add-item');
+                const formNovoPedido = document.getElementById('novo-pedido');
+
+                function obterModal(id) {
+                    const el = document.getElementById(id);
+                    if (!el || typeof bootstrap === 'undefined') return null;
+                    return bootstrap.Modal.getOrCreateInstance(el);
+                }
+
+                function apiHeaders() {
+                    const headers = { 'Content-Type': 'application/json' };
+                    headers[csrfHeader] = csrfToken;
+                    return headers;
+                }
+
+                function mostrarFeedback(mensagem, ok) {
+                    if (!feedback) {
+                        alert(mensagem);
+                        return;
+                    }
+                    feedback.textContent = mensagem;
+                    feedback.className = 'alert ' + (ok ? 'alert-success' : 'alert-danger');
+                }
+
+                async function lerErro(response, padrao) {
+                    try {
+                        const data = await response.json();
+                        return data.erro || data.message || padrao;
+                    } catch (e) {
+                        return padrao;
+                    }
+                }
+
+                function renderItens() {
+                    if (!tbodyItens) return;
+                    tbodyItens.innerHTML = '';
+                    if (itens.length === 0) {
+                        if (itensVazio) itensVazio.classList.remove('d-none');
+                        return;
+                    }
+                    if (itensVazio) itensVazio.classList.add('d-none');
+                    itens.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${item.nome}</td>
+                            <td>${item.quantidade}</td>
+                            <td>R$ ${Number(item.preco).toFixed(2)}</td>
+                            <td><button type="button" class="btn btn-sm btn-outline-danger" data-index="${index}">
+                                <i class="bi bi-trash"></i></button></td>`;
+                        tbodyItens.appendChild(tr);
+                    });
+                }
+
+                if (btnAddItem) {
+                    btnAddItem.addEventListener('click', () => {
+                        const select = document.getElementById('produto-id');
+                        const option = select && select.selectedOptions[0];
+                        const quantidade = Number(document.getElementById('quantidade').value);
+                        if (!option || !option.value) {
+                            alert('Selecione um produto.');
+                            return;
+                        }
+                        if (!quantidade || quantidade < 1) {
+                            alert('Informe uma quantidade válida.');
+                            return;
+                        }
+                        const existente = itens.find(i => i.produtoId === option.value);
+                        if (existente) {
+                            existente.quantidade += quantidade;
+                        } else {
+                            itens.push({
+                                produtoId: option.value,
+                                nome: option.dataset.nome || option.textContent,
+                                preco: option.dataset.preco || 0,
+                                quantidade
+                            });
+                        }
+                        select.value = '';
+                        document.getElementById('quantidade').value = 1;
+                        renderItens();
+                    });
+                }
+
+                if (tbodyItens) {
+                    tbodyItens.addEventListener('click', event => {
+                        const btn = event.target.closest('button[data-index]');
+                        if (!btn) return;
+                        itens.splice(Number(btn.dataset.index), 1);
+                        renderItens();
+                    });
+                }
+
+                if (formNovoPedido) {
+                    formNovoPedido.addEventListener('submit', async event => {
+                        event.preventDefault();
+                        const clienteId = document.getElementById('cliente-id').value;
+                        if (!clienteId) {
+                            alert('Selecione o cliente.');
+                            return;
+                        }
+                        if (itens.length === 0) {
+                            alert('Adicione ao menos um item ao pedido.');
+                            return;
+                        }
+                        const response = await fetch('/api/pedidos', {
+                            method: 'POST',
+                            headers: apiHeaders(),
+                            body: JSON.stringify({
+                                clienteId,
+                                itens: itens.map(i => ({ produtoId: i.produtoId, quantidade: i.quantidade }))
+                            })
+                        });
+                        if (response.ok) {
+                            location.reload();
+                            return;
+                        }
+                        let mensagem = await lerErro(response, 'Não foi possível registrar o pedido.');
+                        if (response.status === 403) {
+                            mensagem = 'Você não tem permissão para registrar pedidos com este usuário.';
+                        }
+                        mostrarFeedback(mensagem, false);
+                    });
+                }
+
+                async function atualizarStatus(pedidoId, status) {
+                    const response = await fetch(`/api/pedidos/${pedidoId}/status`, {
+                        method: 'PUT',
+                        headers: apiHeaders(),
+                        body: JSON.stringify({ status })
+                    });
+                    if (response.ok) {
+                        location.reload();
+                        return;
+                    }
+                    mostrarFeedback(await lerErro(response, 'Não foi possível atualizar o status.'), false);
+                }
+
+                document.querySelectorAll('.btn-status').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const pedidoId = btn.closest('tr').dataset.pedidoId;
+                        const status = btn.dataset.status;
+                        atualizarStatus(pedidoId, status);
+                    });
+                });
+
+                document.querySelectorAll('.btn-desconto').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pedidoSelecionado = btn.closest('tr').dataset.pedidoId;
+                        document.getElementById('percentual-desconto').value = '5';
+                        modalDesconto = obterModal('modalDesconto');
+                        if (modalDesconto) modalDesconto.show();
+                    });
+                });
+
+                document.querySelectorAll('.btn-cancelar').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pedidoSelecionado = btn.closest('tr').dataset.pedidoId;
+                        document.getElementById('justificativa-cancelamento').value = '';
+                        modalCancelamento = obterModal('modalCancelamento');
+                        if (modalCancelamento) modalCancelamento.show();
+                    });
+                });
+
+                const btnConfirmarDesconto = document.getElementById('confirmar-desconto');
+                if (btnConfirmarDesconto) {
+                    btnConfirmarDesconto.addEventListener('click', async () => {
+                        const percentual = Number(document.getElementById('percentual-desconto').value);
+                        if (!pedidoSelecionado || !percentual || percentual <= 0 || percentual > 20) {
+                            alert('Informe um percentual entre 0,01 e 20.');
+                            return;
+                        }
+                        const response = await fetch(`/api/pedidos/${pedidoSelecionado}/desconto`, {
+                            method: 'PUT',
+                            headers: apiHeaders(),
+                            body: JSON.stringify({ percentual })
+                        });
+                        if (response.ok) {
+                            location.reload();
+                            return;
+                        }
+                        if (modalDesconto) modalDesconto.hide();
+                        mostrarFeedback(await lerErro(response, 'Não foi possível aplicar o desconto.'), false);
+                    });
+                }
+
+                const btnConfirmarCancelamento = document.getElementById('confirmar-cancelamento');
+                if (btnConfirmarCancelamento) {
+                    btnConfirmarCancelamento.addEventListener('click', async () => {
+                        const justificativa = document.getElementById('justificativa-cancelamento').value.trim();
+                        if (!pedidoSelecionado || !justificativa) {
+                            alert('Informe a justificativa do cancelamento.');
+                            return;
+                        }
+                        const response = await fetch(`/api/pedidos/${pedidoSelecionado}/cancelamento`, {
+                            method: 'PUT',
+                            headers: apiHeaders(),
+                            body: JSON.stringify({ justificativa })
+                        });
+                        if (response.ok) {
+                            location.reload();
+                            return;
+                        }
+                        if (modalCancelamento) modalCancelamento.hide();
+                        mostrarFeedback(await lerErro(response, 'Não foi possível cancelar o pedido.'), false);
+                    });
+                }
+
+                renderItens();
+            });
+        </script>
+
     </div>
-
-</div>
-
 </body>
+
 </html>

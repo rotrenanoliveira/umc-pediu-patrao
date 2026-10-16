@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-clock-history me-2 text-primary"></i>Auditoria
+            </h2>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label" for="filtro-entidade">Filtrar por entidade</label>
+                        <select id="filtro-entidade" class="form-select">
+                            <option value="">Todas</option>
+                            <option value="PEDIDO">Pedido</option>
+                            <option value="CLIENTE">Cliente</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" id="btn-filtrar" class="btn btn-primary w-100">Filtrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="ps-4">Data/hora</th>
+                                <th>Usuário</th>
+                                <th>Perfil</th>
+                                <th>Operação</th>
+                                <th>Entidade</th>
+                                <th>Alterações</th>
+                                <th>Justificativa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditorias">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                const tabela = document.getElementById('auditorias');
+                const filtro = document.getElementById('filtro-entidade');
+
+                function formatarAlteracoes(alteracoes) {
+                    if (!alteracoes || Object.keys(alteracoes).length === 0) return '—';
+                    return Object.entries(alteracoes).map(([campo, valor]) => {
+                        const anterior = valor?.anterior ?? '—';
+                        const novo = valor?.novo ?? '—';
+                        return `${campo}: ${anterior} → ${novo}`;
+                    }).join('; ');
+                }
+
+                async function carregarAuditorias() {
+                    const entidade = filtro.value;
+                    const url = entidade ? `/api/auditorias?entidade=${encodeURIComponent(entidade)}` : '/api/auditorias';
+                    tabela.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Carregando...</td></tr>`;
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error('Falha ao carregar');
+                        const eventos = await response.json();
+                        if (!eventos.length) {
+                            tabela.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>Nenhum registro encontrado.</td></tr>`;
+                            return;
+                        }
+                        tabela.innerHTML = '';
+                        eventos.forEach(e => {
+                            const linha = document.createElement('tr');
+                            linha.innerHTML = `
+                                <td class="ps-4">${e.dataHora ? new Date(e.dataHora).toLocaleString() : '—'}</td>
+                                <td>${e.usuario || '—'}</td>
+                                <td><span class="badge bg-secondary">${e.perfil || '—'}</span></td>
+                                <td>${e.operacao || '—'}</td>
+                                <td>${e.entidade || '—'} <span class="text-muted small">${e.entidadeId || ''}</span></td>
+                                <td class="small">${formatarAlteracoes(e.alteracoes)}</td>
+                                <td class="small">${e.justificativa || '—'}</td>`;
+                            tabela.appendChild(linha);
+                        });
+                    } catch (err) {
+                        tabela.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Erro ao carregar auditoria.</td></tr>`;
+                    }
+                }
+
+                document.getElementById('btn-filtrar').addEventListener('click', carregarAuditorias);
+                carregarAuditorias();
+            })();
+        </script>
+    </div>
+</body>
+
+</html>

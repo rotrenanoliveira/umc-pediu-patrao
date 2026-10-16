@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -45,10 +46,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Desativa CSRF para REST APIs
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**", "/dist/**", "/plugins/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/api/usuarios").permitAll()
+
+                        // ADMIN only
+                        .requestMatchers("/usuarios", "/usuarios/**", "/api/usuarios", "/api/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/clientes", "/api/clientes/**").hasRole("ADMIN")
+                        .requestMatchers("/clientes/deletar", "/clientes/deletar/**").hasRole("ADMIN")
+
+                        // ADMIN + GERENTE
+                        .requestMatchers("/auditoria", "/auditoria/**", "/api/auditorias", "/api/auditorias/**").hasAnyRole("ADMIN", "GERENTE")
+                        .requestMatchers("/api/pedidos/*/desconto", "/api/pedidos/*/cancelamento").hasAnyRole("ADMIN", "GERENTE")
+                        .requestMatchers(
+                                "/produtos", "/produtos/**", "/api/produtos", "/api/produtos/**",
+                                "/funcionarios", "/funcionarios/**", "/api/funcionarios", "/api/funcionarios/**",
+                                "/entregadores", "/entregadores/**", "/api/entregadores", "/api/entregadores/**",
+                                "/horarios", "/horarios/**", "/api/horarios", "/api/horarios/**",
+                                "/configuracoes", "/configuracoes/**"
+                        ).hasAnyRole("ADMIN", "GERENTE")
+
+                        // ADMIN + GERENTE + ATENDENTE (operacional)
+                        .requestMatchers("/clientes", "/clientes/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers("/pedidos", "/pedidos/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/clientes", "/api/clientes/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/clientes", "/api/clientes/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/clientes", "/api/clientes/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/pedidos", "/api/pedidos/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/pedidos", "/api/pedidos/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/pedidos", "/api/pedidos/**").hasAnyRole("ADMIN", "GERENTE", "ATENDENTE")
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

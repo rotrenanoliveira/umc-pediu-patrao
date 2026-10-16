@@ -30,6 +30,12 @@ public class UsuarioService {
 
     // Salva um novo usuário (criptografando a senha)
     public void salvarUsuario(Usuario usuario) {
+        if (usuario.getPerfil() == null) {
+            throw new IllegalArgumentException("Perfil é obrigatório.");
+        }
+        if (usuario.getPassword() == null || usuario.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Senha é obrigatória.");
+        }
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword())); // Criptografa a senha
         usuarioRepository.save(usuario);
     }
@@ -48,7 +54,7 @@ public class UsuarioService {
     public void atualizarUsuario(String id, Usuario usuarioAtualizado) {
         usuarioRepository.findById(id).ifPresent(usuarioExistente -> {
             usuarioExistente.setUsername(usuarioAtualizado.getUsername());
-            usuarioExistente.setRole(usuarioAtualizado.getRole());
+            usuarioExistente.setPerfil(usuarioAtualizado.getPerfil());
 
             // Só atualiza a senha se uma nova foi informada
             if (usuarioAtualizado.getPassword() != null && !usuarioAtualizado.getPassword().isBlank()) {

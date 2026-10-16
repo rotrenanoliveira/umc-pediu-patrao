@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Entregador</title>
+</head>
+
+<body>
+    <div th:fragment="content">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="/entregadores" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h2 class="fw-bold mb-0">
+                <span th:text="${entregador.id != null} ? 'Editar Entregador' : 'Novo Entregador'"></span>
+            </h2>
+        </div>
+
+        <div class="card shadow-sm" style="max-width: 560px;">
+            <div class="card-body p-4">
+                <form th:action="${entregador.id != null}
+                        ? @{/entregadores/editar/{id}(id=${entregador.id})}
+                        : @{/entregadores/salvar}" th:object="${entregador}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <div class="mb-3">
+                        <label for="nome" class="form-label fw-medium">
+                            <i class="bi bi-person me-1"></i>Nome
+                        </label>
+                        <input type="text" id="nome" class="form-control" th:field="*{nome}"
+                            placeholder="Ex: Carlos Lima" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="telefone" class="form-label fw-medium">
+                            <i class="bi bi-telephone me-1"></i>Telefone
+                        </label>
+                        <input type="text" id="telefone" class="form-control" th:field="*{telefone}"
+                            placeholder="Ex: (11) 98888-7777" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="veiculo" class="form-label fw-medium">
+                            <i class="bi bi-bicycle me-1"></i>Veículo
+                        </label>
+                        <select id="veiculo" class="form-select" th:field="*{veiculo}" required>
+                            <option value="" disabled>Selecione o veículo</option>
+                            <option value="Moto">Moto</option>
+                            <option value="Bicicleta">Bicicleta</option>
+                            <option value="Carro">Carro</option>
+                            <option value="A pé">A pé</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="placa" class="form-label fw-medium">
+                            <i class="bi bi-card-text me-1"></i>Placa
+                        </label>
+                        <input type="text" id="placa" class="form-control" th:field="*{placa}"
+                            placeholder="Ex: ABC1D23 (opcional)" />
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input type="checkbox" id="ativo" class="form-check-input" th:field="*{ativo}" />
+                        <label for="ativo" class="form-check-label">Entregador ativo</label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${entregador.id != null} ? 'Salvar Alterações' : 'Criar Entregador'"></span>
+                        </button>
+                        <a href="/entregadores" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById('telefone').addEventListener('input', function () {
+                let v = this.value.replace(/\D/g, '');
+                if (v.length <= 10) {
+                    v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                } else {
+                    v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+                }
+                this.value = v;
+            });
+        </script>
+
+    </div>
+</body>
+
+</html>

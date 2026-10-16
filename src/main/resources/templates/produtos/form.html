@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Produto</title>
+</head>
+
+<body>
+    <div th:fragment="content">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <a href="/produtos" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h2 class="fw-bold mb-0">
+                <span th:text="${produto.id != null} ? 'Editar Produto' : 'Novo Produto'"></span>
+            </h2>
+        </div>
+
+        <div class="card shadow-sm" style="max-width: 560px;">
+            <div class="card-body p-4">
+                <form th:action="${produto.id != null}
+                        ? @{/produtos/editar/{id}(id=${produto.id})}
+                        : @{/produtos/salvar}" th:object="${produto}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <div class="mb-3">
+                        <label for="nome" class="form-label fw-medium">
+                            <i class="bi bi-box me-1"></i>Nome
+                        </label>
+                        <input type="text" id="nome" class="form-control" th:field="*{nome}"
+                            placeholder="Ex: Pizza Calabresa" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label fw-medium">
+                            <i class="bi bi-tags me-1"></i>Tipo
+                        </label>
+                        <select id="tipo" class="form-select" th:field="*{tipo}" required>
+                            <option value="" disabled>Selecione o tipo</option>
+                            <option value="Pizza">Pizza</option>
+                            <option value="Lanche">Lanche</option>
+                            <option value="Bebida">Bebida</option>
+                            <option value="Porção">Porção</option>
+                            <option value="Adicional">Adicional</option>
+                            <option value="Esfiha">Esfiha</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="preco" class="form-label fw-medium">
+                            <i class="bi bi-currency-dollar me-1"></i>Preço (R$)
+                        </label>
+                        <input type="number" id="preco" class="form-control" th:field="*{preco}" placeholder="0.00"
+                            step="0.01" min="0" required />
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input type="checkbox" id="ativo" class="form-check-input" th:field="*{ativo}" />
+                        <label for="ativo" class="form-check-label">Produto ativo</label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${produto.id != null} ? 'Salvar Alterações' : 'Criar Produto'"></span>
+                        </button>
+                        <a href="/produtos" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>
