@@ -56,6 +56,7 @@ public class SecurityConfig {
 
                         // ADMIN + GERENTE
                         .requestMatchers("/auditoria", "/auditoria/**", "/api/auditorias", "/api/auditorias/**").hasAnyRole("ADMIN", "GERENTE")
+                        .requestMatchers("/dashboard", "/dashboard/**", "/api/dashboard", "/api/dashboard/**").hasAnyRole("ADMIN", "GERENTE")
                         .requestMatchers("/api/pedidos/*/desconto", "/api/pedidos/*/cancelamento").hasAnyRole("ADMIN", "GERENTE")
                         .requestMatchers(
                                 "/produtos", "/produtos/**", "/api/produtos", "/api/produtos/**",
