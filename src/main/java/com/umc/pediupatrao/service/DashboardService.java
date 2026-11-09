@@ -47,7 +47,7 @@ public class DashboardService {
                                 new Document("$match", new Document("status",
                                         new Document("$ne", StatusPedido.CANCELADO.name()))),
                                 new Document("$group", new Document("_id", null)
-                                        .append("totalVendas", new Document("$sum", "$valorTotal"))
+                                        .append("totalVendas", new Document("$sum", paraDecimal("$valorTotal")))
                                         .append("quantidadePedidos", new Document("$sum", 1)))
                         ))
                         .append("cancelados", Arrays.asList(
@@ -117,7 +117,7 @@ public class DashboardService {
                                 .append("format", "%Y-%m-%d")
                                 .append("date", "$dataHoraEntrada")
                                 .append("timezone", ZONE.getId())))
-                        .append("totalVendas", new Document("$sum", "$valorTotal"))
+                        .append("totalVendas", new Document("$sum", paraDecimal("$valorTotal")))
                         .append("quantidadePedidos", new Document("$sum", 1))),
                 Aggregation.sort(Sort.by(Sort.Direction.ASC, "_id"))
         );
@@ -167,7 +167,7 @@ public class DashboardService {
                         .append("produtoId", "$itens.produtoId")
                         .append("nomeProduto", "$itens.nomeProduto"))
                         .append("quantidadeVendida", new Document("$sum", "$itens.quantidade"))
-                        .append("valorTotal", new Document("$sum", "$itens.subtotal"))),
+                        .append("valorTotal", new Document("$sum", paraDecimal("$itens.subtotal")))),
                 Aggregation.sort(Sort.by(Sort.Direction.DESC, "quantidadeVendida")),
                 Aggregation.limit(top)
         );
@@ -250,6 +250,18 @@ public class DashboardService {
             throw new IllegalArgumentException("limite deve estar entre 1 e " + LIMITE_MAXIMO + ".");
         }
         return limite;
+    }
+
+    /**
+     * Spring Data MongoDB grava BigDecimal como String por padrão.
+     * $sum ignora não-numéricos (resultado 0); $convert cobre String e Decimal128.
+     */
+    private static Document paraDecimal(String campo) {
+        return new Document("$convert", new Document()
+                .append("input", campo)
+                .append("to", "decimal")
+                .append("onError", org.bson.types.Decimal128.POSITIVE_ZERO)
+                .append("onNull", org.bson.types.Decimal128.POSITIVE_ZERO));
     }
 
     private BigDecimal toBigDecimal(Object value) {
