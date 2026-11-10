@@ -6,6 +6,8 @@ Veja o vídeo explicativo (clicando na imagem abaixo):
 
 [![Vídeo Explicativo](.github/dashboard.png)](https://youtu.be/lYxihSUQQVg)
 
+Link para o vídeo -> [Vídeo Explicativo](https://youtu.be/lYxihSUQQVg)
+
 
 ## Funcionalidades
 
