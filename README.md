@@ -2,7 +2,10 @@
 
 O Pediu Patrão é um sistema de pedidos para pizzaria, desenvolvido como projeto de Engenharia de Software. O objetivo é organizar a operação do estabelecimento: cada perfil possui atribuições próprias, e o pedido percorre etapas definidas desde o recebimento até a entrega ou a retirada.
 
-![Painel do sistema](.github/dashboard.png)
+Veja o vídeo explicativo abaixo:
+
+[![Vídeo Explicativo](.github/dashboard.png)](https://youtu.be/lYxihSUQQVg)
+
 
 ## Funcionalidades
 
