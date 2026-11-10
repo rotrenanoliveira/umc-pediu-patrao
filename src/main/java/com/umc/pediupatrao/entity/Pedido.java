@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.mapping.FieldType;
 
 @Document(collection = "pedidos")
 public class Pedido {
@@ -14,9 +16,13 @@ public class Pedido {
     private String clienteId;
     private List<ItemPedido> itens = new ArrayList<>();
     private StatusPedido status;
+    @Field(targetType = FieldType.DECIMAL128)
     private BigDecimal subtotal;
+    @Field(targetType = FieldType.DECIMAL128)
     private BigDecimal percentualDesconto = BigDecimal.ZERO;
+    @Field(targetType = FieldType.DECIMAL128)
     private BigDecimal valorDesconto = BigDecimal.ZERO;
+    @Field(targetType = FieldType.DECIMAL128)
     private BigDecimal valorTotal;
     private String responsavelEntrada;
     private Instant dataHoraEntrada;

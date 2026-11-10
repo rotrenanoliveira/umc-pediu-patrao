@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">
+                <i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard Administrativo
+            </h2>
+        </div>
+
+        <div id="dashboard-alerta" class="alert alert-danger d-none" role="alert"></div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label" for="filtro-data-inicio">Data início</label>
+                        <input type="date" id="filtro-data-inicio" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filtro-data-fim">Data fim</label>
+                        <input type="date" id="filtro-data-fim" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="filtro-status">Status</label>
+                        <select id="filtro-status" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="RECEBIDO">Recebido</option>
+                            <option value="EM_PREPARACAO">Em preparação</option>
+                            <option value="PRONTO">Pronto</option>
+                            <option value="SAIU_PARA_ENTREGA">Saiu para entrega</option>
+                            <option value="RETIRADO">Retirado</option>
+                            <option value="FINALIZADO">Finalizado</option>
+                            <option value="CANCELADO">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="button" id="btn-filtrar" class="btn btn-primary flex-fill">
+                            <i class="bi bi-funnel me-1"></i>Filtrar
+                        </button>
+                        <button type="button" id="btn-atualizar" class="btn btn-outline-secondary flex-fill">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Total de vendas</div>
+                        <div id="kpi-total-vendas" class="fs-4 fw-bold">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Pedidos (não cancelados)</div>
+                        <div id="kpi-qtd-pedidos" class="fs-4 fw-bold">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Ticket médio</div>
+                        <div id="kpi-ticket-medio" class="fs-4 fw-bold">—</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">Cancelados / taxa</div>
+                        <div id="kpi-cancelamentos" class="fs-4 fw-bold">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold">Vendas por dia</div>
+                    <div class="card-body">
+                        <canvas id="grafico-vendas" height="140"></canvas>
+                        <div id="vendas-vazio" class="text-center text-muted py-4 d-none">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>Sem vendas no período.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold">Pedidos por status</div>
+                    <div class="card-body">
+                        <canvas id="grafico-status" height="140"></canvas>
+                        <div id="status-vazio" class="text-center text-muted py-4 d-none">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>Sem pedidos no período.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold">Situação dos pedidos</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="ps-4">Status</th>
+                                        <th class="pe-4 text-end">Quantidade</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-status">
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted py-4">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-semibold">Produtos mais vendidos</div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="ps-4">#</th>
+                                        <th>Produto</th>
+                                        <th class="text-end">Qtd.</th>
+                                        <th class="pe-4 text-end">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-produtos">
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/plugins/chart.js/Chart.min.js}"></script>
+        <script>
+            (function () {
+                const alerta = document.getElementById('dashboard-alerta');
+                const inputInicio = document.getElementById('filtro-data-inicio');
+                const inputFim = document.getElementById('filtro-data-fim');
+                const selectStatus = document.getElementById('filtro-status');
+                const tabelaStatus = document.getElementById('tabela-status');
+                const tabelaProdutos = document.getElementById('tabela-produtos');
+                const vendasVazio = document.getElementById('vendas-vazio');
+                const statusVazio = document.getElementById('status-vazio');
+                const canvasVendas = document.getElementById('grafico-vendas');
+                const canvasStatus = document.getElementById('grafico-status');
+
+                let chartVendas = null;
+                let chartStatus = null;
+
+                const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                function hojeIso() {
+                    const d = new Date();
+                    return d.toISOString().slice(0, 10);
+                }
+
+                function primeiroDiaMesIso() {
+                    const d = new Date();
+                    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+                }
+
+                function inicializarDatas() {
+                    inputInicio.value = primeiroDiaMesIso();
+                    inputFim.value = hojeIso();
+                }
+
+                function mostrarErro(mensagem) {
+                    alerta.textContent = mensagem;
+                    alerta.classList.remove('d-none');
+                }
+
+                function limparErro() {
+                    alerta.classList.add('d-none');
+                    alerta.textContent = '';
+                }
+
+                function montarQuery() {
+                    const params = new URLSearchParams();
+                    if (inputInicio.value) params.set('dataInicio', inputInicio.value);
+                    if (inputFim.value) params.set('dataFim', inputFim.value);
+                    if (selectStatus.value) params.set('status', selectStatus.value);
+                    const qs = params.toString();
+                    return qs ? `?${qs}` : '';
+                }
+
+                function validarPeriodo() {
+                    if (inputInicio.value && inputFim.value && inputInicio.value > inputFim.value) {
+                        throw new Error('A data início não pode ser posterior à data fim.');
+                    }
+                }
+
+                async function fetchJson(url) {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        let mensagem = 'Falha ao carregar dados do dashboard.';
+                        try {
+                            const body = await response.json();
+                            if (body && body.erro) mensagem = body.erro;
+                        } catch (_) { /* ignore */ }
+                        throw new Error(mensagem);
+                    }
+                    return response.json();
+                }
+
+                function atualizarKpis(resumo) {
+                    document.getElementById('kpi-total-vendas').textContent = moeda.format(resumo.totalVendas || 0);
+                    document.getElementById('kpi-qtd-pedidos').textContent = resumo.quantidadePedidos ?? 0;
+                    document.getElementById('kpi-ticket-medio').textContent = moeda.format(resumo.ticketMedio || 0);
+                    document.getElementById('kpi-cancelamentos').textContent =
+                        `${resumo.quantidadeCancelados ?? 0} (${resumo.taxaCancelamento ?? 0}%)`;
+                }
+
+                function destruirChart(chart) {
+                    if (chart) chart.destroy();
+                    return null;
+                }
+
+                function renderVendas(serie) {
+                    chartVendas = destruirChart(chartVendas);
+                    if (!serie || serie.length === 0) {
+                        canvasVendas.classList.add('d-none');
+                        vendasVazio.classList.remove('d-none');
+                        return;
+                    }
+                    canvasVendas.classList.remove('d-none');
+                    vendasVazio.classList.add('d-none');
+                    chartVendas = new Chart(canvasVendas.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: serie.map(i => i.periodo),
+                            datasets: [{
+                                label: 'Total de vendas (R$)',
+                                data: serie.map(i => Number(i.totalVendas)),
+                                borderColor: '#0d6efd',
+                                backgroundColor: 'rgba(13, 110, 253, 0.15)',
+                                fill: true,
+                                lineTension: 0.25
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            legend: { display: true },
+                            scales: {
+                                yAxes: [{ ticks: { beginAtZero: true } }],
+                                xAxes: [{ ticks: { autoSkip: true, maxTicksLimit: 10 } }]
+                            }
+                        }
+                    });
+                }
+
+                function renderStatus(itens) {
+                    chartStatus = destruirChart(chartStatus);
+                    if (!itens || itens.length === 0) {
+                        canvasStatus.classList.add('d-none');
+                        statusVazio.classList.remove('d-none');
+                        tabelaStatus.innerHTML = `<tr><td colspan="2" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>Nenhum pedido encontrado.</td></tr>`;
+                        return;
+                    }
+                    canvasStatus.classList.remove('d-none');
+                    statusVazio.classList.add('d-none');
+
+                    const cores = ['#0d6efd', '#198754', '#ffc107', '#fd7e14', '#6f42c1', '#20c997', '#dc3545'];
+                    chartStatus = new Chart(canvasStatus.getContext('2d'), {
+                        type: 'doughnut',
+                        data: {
+                            labels: itens.map(i => i.status),
+                            datasets: [{
+                                data: itens.map(i => Number(i.quantidade)),
+                                backgroundColor: itens.map((_, idx) => cores[idx % cores.length])
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            legend: { position: 'bottom' }
+                        }
+                    });
+
+                    tabelaStatus.innerHTML = '';
+                    itens.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="ps-4"><span class="badge bg-secondary">${item.status}</span></td>
+                            <td class="pe-4 text-end fw-semibold">${item.quantidade}</td>`;
+                        tabelaStatus.appendChild(tr);
+                    });
+                }
+
+                function renderProdutos(itens) {
+                    if (!itens || itens.length === 0) {
+                        tabelaProdutos.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>Nenhum produto vendido no período.</td></tr>`;
+                        return;
+                    }
+                    tabelaProdutos.innerHTML = '';
+                    itens.forEach((item, idx) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="ps-4">${idx + 1}</td>
+                            <td>${item.nomeProduto || '—'}</td>
+                            <td class="text-end">${item.quantidadeVendida}</td>
+                            <td class="pe-4 text-end">${moeda.format(item.valorTotal || 0)}</td>`;
+                        tabelaProdutos.appendChild(tr);
+                    });
+                }
+
+                async function carregarDashboard() {
+                    limparErro();
+                    try {
+                        validarPeriodo();
+                    } catch (err) {
+                        mostrarErro(err.message);
+                        return;
+                    }
+
+                    document.getElementById('kpi-total-vendas').textContent = '…';
+                    document.getElementById('kpi-qtd-pedidos').textContent = '…';
+                    document.getElementById('kpi-ticket-medio').textContent = '…';
+                    document.getElementById('kpi-cancelamentos').textContent = '…';
+                    tabelaStatus.innerHTML = `<tr><td colspan="2" class="text-center text-muted py-4">Carregando...</td></tr>`;
+                    tabelaProdutos.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Carregando...</td></tr>`;
+
+                    const q = montarQuery();
+                    try {
+                        const [resumo, vendas, status, produtos] = await Promise.all([
+                            fetchJson(`/api/dashboard/resumo${q}`),
+                            fetchJson(`/api/dashboard/vendas-por-periodo${q}`),
+                            fetchJson(`/api/dashboard/pedidos-por-status${q}`),
+                            fetchJson(`/api/dashboard/produtos-mais-vendidos${q}`)
+                        ]);
+                        atualizarKpis(resumo);
+                        renderVendas(vendas);
+                        renderStatus(status);
+                        renderProdutos(produtos);
+                    } catch (err) {
+                        mostrarErro(err.message || 'Erro ao atualizar o dashboard.');
+                        tabelaStatus.innerHTML = `<tr><td colspan="2" class="text-center text-danger py-4">Erro ao carregar.</td></tr>`;
+                        tabelaProdutos.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4">Erro ao carregar.</td></tr>`;
+                    }
+                }
+
+                document.getElementById('btn-filtrar').addEventListener('click', carregarDashboard);
+                document.getElementById('btn-atualizar').addEventListener('click', carregarDashboard);
+
+                inicializarDatas();
+                carregarDashboard();
+            })();
+        </script>
+    </div>
+</body>
+
+</html>
